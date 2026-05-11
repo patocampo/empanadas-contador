@@ -14,36 +14,41 @@ components.html(
         }
     }
 
-    // Capturar Enter y "Siguiente" del teclado móvil
+    // Capturar botón "Sig." y Enter
     window.parent.document.addEventListener('keydown', function(e) {
         if (e.key === 'Enter' || e.keyCode === 13) {
             e.preventDefault();
-            blurActiveInput();
+            setTimeout(blurActiveInput, 10);
         }
     }, true);
 
     window.parent.document.addEventListener('keypress', function(e) {
         if (e.key === 'Enter' || e.keyCode === 13) {
             e.preventDefault();
-            blurActiveInput();
+            setTimeout(blurActiveInput, 10);
         }
     }, true);
 
-    // Observador para aplicar comportamiento a todos los inputs (incluidos los nuevos)
+    // Observador para nuevos inputs
     const observer = new MutationObserver(() => {
-        const inputs = window.parent.document.querySelectorAll('input');
+        const inputs = window.parent.document.querySelectorAll('input[type="number"], input[type="text"]');
         inputs.forEach(input => {
             if (input.dataset.keyboardFixed) return;
             input.dataset.keyboardFixed = 'true';
 
-            // Al cambiar el valor (ideal para number_input)
+            // Al cambiar valor → cerrar teclado
             input.addEventListener('change', () => {
-                setTimeout(blurActiveInput, 80);
+                setTimeout(blurActiveInput, 100);
             });
 
-            // Al soltar el dedo (bueno para móviles)
+            // Al soltar el dedo (importante en móviles)
             input.addEventListener('touchend', () => {
-                setTimeout(blurActiveInput, 120);
+                setTimeout(blurActiveInput, 150);
+            });
+
+            // Doble toque también puede ayudar
+            input.addEventListener('blur', () => {
+                // Por si el usuario toca fuera
             });
         });
     });
@@ -53,10 +58,10 @@ components.html(
         subtree: true 
     });
 
-    // Click/touch fuera de inputs también cierra teclado
+    // Click fuera también cierra
     window.parent.document.addEventListener('touchend', function(e) {
         if (!e.target.closest('input')) {
-            setTimeout(blurActiveInput, 50);
+            setTimeout(blurActiveInput, 80);
         }
     }, { passive: true });
     </script>
@@ -69,18 +74,15 @@ st.markdown("""
     <style>
     .main { background-color: #fdf2e9; }
     [data-testid="stHeaderActionElements"] { display: none; }
-    .stMarkdown h1 a, .stMarkdown h2 a, .stMarkdown h3 a { display: none; }
     
-    /* Inputs más grandes y cómodos en móvil */
+    /* Inputs grandes y cómodos en celular */
     .stNumberInput input {
-        font-size: 1.25rem !important;
-        height: 3.2rem !important;
+        font-size: 1.3rem !important;
+        height: 3.4rem !important;
+        padding: 0.6rem !important;
     }
     
-    /* Evita que "Sig." pase al siguiente campo */
-    .stNumberInput input, .stTextInput input {
-        tabindex: -1 !important;
-    }
+    /* NO usar tabindex -1 porque bloquea el teclado */
     </style>
 """, unsafe_allow_html=True)
 
@@ -96,13 +98,13 @@ if 'personas' not in st.session_state:
     st.session_state.personas = {}
 
 def agregar_persona():
-    nombre = st.session_state.nuevo_nombre.strip()
+    nombre = st.session_state.get("nuevo_nombre", "").strip()
     if nombre and nombre not in st.session_state.personas:
         st.session_state.personas[nombre] = {sabor: 0 for sabor in st.session_state.sabores}
         st.session_state.nuevo_nombre = ""
 
 def agregar_sabor():
-    nuevo_s = st.session_state.nuevo_sabor_input.strip()
+    nuevo_s = st.session_state.get("nuevo_sabor_input", "").strip()
     if nuevo_s and nuevo_s not in st.session_state.sabores:
         st.session_state.sabores.append(nuevo_s)
         for p in st.session_state.personas:
